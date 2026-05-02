@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teste José — Leitor de Catálogo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0d0e;
+    --bg2: #181416;
+    --bg3: #221d1f;
+    --surface: #2a2326;
+    --surface2: #332b2e;
+    --gold: #c9a96e;
+    --gold2: #e8c99a;
+    --rose: #d4808a;
+    --rose2: #e8a0a8;
+    --text: #f0ebe8;
+    --text2: #b8afa8;
+    --text3: #7a706a;
+    --border: rgba(201,169,110,0.15);
+    --border2: rgba(201,169,110,0.28);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 300;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--gold); letter-spacing: 0.08em; }
+  .logo-sub { font-size: 11px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-top: -2px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .badge-version { font-size: 11px; padding: 3px 10px; border: 1px solid var(--border2); border-radius: 20px; color: var(--text3); }
+
+  /* ── MAIN LAYOUT ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+  /* ── HERO ── */
+  .hero { margin-bottom: 2.5rem; }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 300;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .hero h1 em { color: var(--gold); font-style: italic; }
+  .hero p { font-size: 15px; color: var(--text2); max-width: 520px; font-weight: 300; }
+
+  /* ── SETUP PANEL ── */
+  .setup-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .panel-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .api-row { display: flex; gap: 10px; align-items: center; }
+  .api-row input {
+    flex: 1;
+    padding: 11px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    font-family: 'DM Sans', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .api-row input:focus { border-color: var(--gold); }
+  .api-row input::placeholder { color: var(--text3); }
+  .btn-ghost {
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text3);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,169,110,0.06); }
+
+  /* ── UPLOAD AREA ── */
+  .upload-area {
+    border: 1.5px dashed rgba(201,169,110,0.25);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,169,110,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .upload-area:hover, .upload-area.drag {
+    border-color: var(--gold);
+    background: var(--bg3);
+  }
+  .upload-icon {
+    width: 52px; height: 52px;
+    border: 1px solid var(--border2);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: var(--gold);
+  }
+  .upload-area h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--text); margin-bottom: 6px; }
+  .upload-area p { font-size: 13px; color: var(--text3); }
+  .upload-area small { font-size: 11px; color: var(--text3); opacity: 0.7; display: block; margin-top: 6px; letter-spacing: 0.04em; }
+
+  /* ── PREVIEW ── */
+  .preview-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .preview-wrap img {
+    height: 80px;
+    max-width: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .preview-info { flex: 1; }
+  .preview-info p { font-size: 14px; color: var(--text); margin-bottom: 2px; }
+  .preview-info small { font-size: 12px; color: var(--text3); }
+
+  /* ── ACTION ROW ── */
+  .action-row { display: flex; gap: 12px; align-items: center; margin: 1.5rem 0; flex-wrap: wrap; }
+  .btn-primary {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--gold), #b8924a);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #0f0d0e;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    padding: 11px 22px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--rose); color: var(--rose2); background: rgba(212,128,138,0.06); }
+
+  /* ── LOADING ── */
+  .loading-bar {
+    display: none;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+  .loading-bar.show { display: flex; }
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-bar p { font-size: 14px; color: var(--text2); }
+  .loading-bar small { font-size: 12px; color: var(--text3); display: block; }
+
+  /* ── ERROR ── */
+  .error-box {
+    display: none;
+    background: rgba(212,128,138,0.08);
+    border: 1px solid rgba(212,128,138,0.3);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--rose2);
+    margin-bottom: 1.5rem;
+  }
+  .error-box.show { display: block; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  /* ── RESULTS ── */
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .results-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text);
+  }
+  .results-header h2 span { color: var(--gold); font-style: italic; }
+  .results-actions { display: flex; gap: 8px; }
+
+  /* ── SUMMARY BAR ── */
+  .summary-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat-pill .num { font-size: 15px; font-weight: 500; color: var(--gold); }
+  .stat-pill .lbl { color: var(--text3); }
+
+  /* ── CATEGORY SECTION ── */
+  .cat-section { margin-bottom: 2.5rem; }
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+  .cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cat-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--text);
+    letter-spacing: 0.03em;
+  }
+  .cat-count {
+    font-size: 12px;
+    color: var(--text3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+  }
+  .cat-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* ── CARDS GRID ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .card:hover::before { opacity: 1; }
+  .card-badge {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .card-name-field {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 12px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    outline: none;
+    border-bottom: 1px solid transparent;
+    padding: 2px 0;
+    transition: border-color 0.2s;
+    letter-spacing: 0.01em;
+  }
+  .card-name-field:focus { border-bottom-color: var(--gold); }
+  .fields-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .field-item {
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .field-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .field-input {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    outline: none;
+    padding: 2px 4px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .field-input:focus { border-bottom-color: var(--border2); }
+  .field-input::placeholder { color: var(--text3); opacity: 0.6; }
+  .card-actions { display: flex; justify-content: flex-end; gap: 6px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .btn-card-del {
+    padding: 4px 12px;
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid rgba(212,128,138,0.25);
+    border-radius: 20px;
+    color: rgba(212,128,138,0.6);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-card-del:hover { border-color: var(--rose); color: var(--rose2); background: rgba(212,128,138,0.08); }
+
+  /* ── CATEGORY COLORS ── */
+  .cat-cabelo   { --cat-c: #c9a96e; }
+  .cat-unhas    { --cat-c: #d4808a; }
+  .cat-estetica { --cat-c: #7ec8a0; }
+  .cat-maquiagem{ --cat-c: #e8c99a; }
+  .cat-massagem { --cat-c: #85b7eb; }
+  .cat-outros   { --cat-c: #9a8fa0; }
+
+  .cat-dot, .card::before { background: var(--cat-c, #c9a96e); }
+  .card-badge { background: color-mix(in srgb, var(--cat-c, #c9a96e) 12%, transparent); color: var(--cat-c, #c9a96e); border: 1px solid color-mix(in srgb, var(--cat-c, #c9a96e) 25%, transparent); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast::before { content: '✦'; color: var(--gold); font-size: 10px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-hint {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text3);
+    font-size: 14px;
+    display: none;
+  }
+  .empty-hint .icon { font-size: 28px; margin-bottom: 10px; opacity: 0.4; }
+
+  @media (max-width: 640px) {
+    .main { padding: 1.5rem 1rem 3rem; }
+    .header { padding: 1rem; }
+    .hero h1 { font-size: 30px; }
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo-mark">J</div>
+  <div>
+    <div class="logo-text">Teste José</div>
+    <div class="logo-sub">Gestão de serviços</div>
+  </div>
+  <div class="header-right">
+    <span class="badge-version">MVP v1.0</span>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <div class="hero">
+    <h1>Leitor de <em>catálogo</em><br>inteligente</h1>
+    <p>Fotografe o cardápio de serviços do seu salão e deixe a IA extrair e organizar tudo automaticamente.</p>
+  </div>
+
+  <!-- SETUP -->
+  <div class="setup-panel">
+    <div class="panel-title">Configuração da API</div>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="Cole sua chave OpenAI  (sk-...)">
+      <button class="btn-ghost" onclick="toggleKeyVisibility()">mostrar</button>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-top:10px;">
+      Sua chave é usada diretamente no navegador e não é salva em nenhum servidor.
+      Obtenha em <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--gold);text-decoration:none;">platform.openai.com</a>
+    </p>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="upload-area" id="uploadZone"
+    onclick="document.getElementById('fileInput').click()"
+    ondragover="ev=>{ev.preventDefault();this.classList.add('drag')}"
+    ondragleave="ev=>{this.classList.remove('drag')}"
+    ondrop="handleDrop(event)">
+    <div class="upload-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+    </div>
+    <h3>Arraste o catálogo aqui</h3>
+    <p>Foto do cardápio, tabela de preços ou qualquer imagem com lista de serviços</p>
+    <small>JPG · PNG · WEBP · até 20 MB</small>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(this.files[0])">
+
+  <!-- PREVIEW -->
+  <div class="preview-wrap" id="previewWrap" style="display:none; margin-top:1rem;">
+    <img id="previewImg" src="" alt="preview do catálogo">
+    <div class="preview-info">
+      <p id="previewName">imagem.jpg</p>
+      <small id="previewSize">—</small>
+    </div>
+    <button class="btn-ghost" onclick="clearImage()">trocar</button>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="action-row">
+    <button class="btn-primary" id="btnExtract" onclick="extractServices()" disabled>
+      ✦ Extrair serviços com IA
+    </button>
+    <button class="btn-secondary" onclick="addManualService()">+ Adicionar manualmente</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-bar" id="loadingBar">
+    <div class="spinner"></div>
+    <div>
+      <p id="loadingMsg">Analisando imagem com GPT-4o Vision...</p>
+      <small>Isso pode levar alguns segundos</small>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection" style="display:none">
+    <hr class="divider">
+
+    <div class="results-header">
+      <div>
+        <h2>Serviços <span>cadastrados</span></h2>
+      </div>
+      <div class="results-actions">
+        <button class="btn-ghost" onclick="exportJSON()">Exportar JSON</button>
+        <button class="btn-ghost" onclick="clearAll()" style="color:var(--rose2); border-color:rgba(212,128,138,0.25);">Limpar</button>
+      </div>
+    </div>
+
+    <div class="summary-bar" id="summaryBar"></div>
+
+    <div id="categoriesContainer"></div>
+
+    <div class="empty-hint" id="emptyHint">
+      <div class="icon">✦</div>
+      Nenhum serviço cadastrado ainda.<br>Extraia de uma imagem ou adicione manualmente.
+    </div>
+  </div>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const CAT_META = {
+    'Cabelo':    { cls: 'cat-cabelo',    order: 0 },
+    'Unhas':     { cls: 'cat-unhas',     order: 1 },
+    'Estética':  { cls: 'cat-estetica',  order: 2 },
+    'Maquiagem': { cls: 'cat-maquiagem', order: 3 },
+    'Massagem':  { cls: 'cat-massagem',  order: 4 },
+    'Outros':    { cls: 'cat-outros',    order: 5 },
+  };
+
+  let services = [];
+  let imageBase64 = '';
+
+  /* ── KEY VISIBILITY ── */
+  function toggleKeyVisibility() {
+    const el = document.getElementById('apiKey');
+    el.type = el.type === 'password' ? 'text' : 'password';
+  }
+
+  /* ── FILE HANDLING ── */
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) handleFileSelect(file);
+  }
+
+  function handleFileSelect(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      imageBase64 = ev.target.result.split(',')[1];
+      const imgEl = document.getElementById('previewImg');
+      imgEl.src = ev.target.result;
+      document.getElementById('previewName').textContent = file.name;
+      document.getElementById('previewSize').textContent = (file.size / 1024).toFixed(0) + ' KB';
+      document.getElementById('previewWrap').style.display = 'flex';
+      document.getElementById('uploadZone').style.display = 'none';
+      document.getElementById('btnExtract').disabled = false;
+      hideError();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearImage() {
+    imageBase64 = '';
+    document.getElementById('previewWrap').style.display = 'none';
+    document.getElementById('uploadZone').style.display = 'flex';
+    document.getElementById('btnExtract').disabled = true;
+    document.getElementById('fileInput').value = '';
+  }
+
+  /* ── EXTRACT ── */
+  async function extractServices() {
+    const key = document.getElementById('apiKey').value.trim();
+    if (!key) { showError('Cole sua chave da OpenAI para continuar.'); return; }
+    if (!imageBase64) { showError('Selecione uma imagem primeiro.'); return; }
+
+    hideError();
+    setLoading(true, 'Analisando imagem com GPT-4o Vision...');
+    document.getElementById('btnExtract').disabled = true;
+
+    const prompt = `Você é especialista em salões de beleza. Analise esta imagem de catálogo e extraia TODOS os serviços visíveis.
+
+Para cada serviço identifique:
+- nome: nome do serviço
+- categoria: classifique em: Cabelo, Unhas, Estética, Maquiagem, Massagem ou Outros
+- duracao: duração (ex: "45 min", "1h30") — se não visível, estime ou deixe ""
+- valor: preço (ex: "R$ 80,00") — se não visível deixe ""
+- profissional: nome do profissional responsável, se houver — senão deixe ""
+
+Responda SOMENTE com JSON válido. Sem texto antes ou depois. Formato exato:
+{"servicos":[{"nome":"","categoria":"","duracao":"","valor":"","profissional":""}]}`;
+
+    try {
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: 3000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: 'high' } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Erro ${resp.status} na API OpenAI`);
+      }
+
+      const data = await resp.json();
+      let raw = data.choices?.[0]?.message?.content || '';
+      raw = raw.replace(/```json|```/g, '').trim();
+
+      let parsed;
+      try { parsed = JSON.parse(raw); }
+      catch { throw new Error('A IA não retornou JSON válido. Tente novamente com outra imagem.'); }
+
+      const found = parsed.servicos || [];
+      if (!found.length) throw new Error('Nenhum serviço encontrado na imagem. Tente com uma foto mais nítida.');
+
+      const newServices = found.map((s, i) => ({ ...s, id: Date.now() + i }));
+      services = [...services, ...newServices];
+      renderAll();
+      showToast(`${newServices.length} serviço(s) extraído(s) com sucesso`);
+
+    } catch (err) {
+      showError(err.message || 'Erro inesperado. Tente novamente.');
+    } finally {
+      setLoading(false);
+      document.getElementById('btnExtract').disabled = false;
+    }
+  }
+
+  /* ── MANUAL ADD ── */
+  function addManualService() {
+    const s = { id: Date.now(), nome: 'Novo serviço', categoria: 'Outros', duracao: '', valor: '', profissional: '' };
+    services.push(s);
+    renderAll();
+    document.getElementById('resultsSection').style.display = 'block';
+    setTimeout(() => {
+      const el = document.getElementById('card-' + s.id);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }, 120);
+    showToast('Serviço adicionado — edite os campos');
+  }
+
+  /* ── RENDER ── */
+  function renderAll() {
+    const section = document.getElementById('resultsSection');
+    const container = document.getElementById('categoriesContainer');
+    const summary = document.getElementById('summaryBar');
+    const empty = document.getElementById('emptyHint');
+
+    section.style.display = 'block';
+
+    if (!services.length) {
+      container.innerHTML = '';
+      summary.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    // Group by category
+    const byCat = {};
+    services.forEach(s => {
+      const c = s.categoria || 'Outros';
+      if (!byCat[c]) byCat[c] = [];
+      byCat[c].push(s);
+    });
+
+    const catOrder = Object.keys(CAT_META);
+    const sortedCats = Object.keys(byCat).sort((a, b) => {
+      const oa = CAT_META[a]?.order ?? 99;
+      const ob = CAT_META[b]?.order ?? 99;
+      return oa - ob;
+    });
+
+    // Summary
+    summary.innerHTML = `
+      <div class="stat-pill"><span class="num">${services.length}</span><span class="lbl">serviços</span></div>
+      <div class="stat-pill"><span class="num">${sortedCats.length}</span><span class="lbl">categorias</span></div>
+      ${sortedCats.map(c => `<div class="stat-pill"><span class="num">${byCat[c].length}</span><span class="lbl">${c}</span></div>`).join('')}
+    `;
+
+    // Categories
+    container.innerHTML = sortedCats.map(cat => {
+      const meta = CAT_META[cat] || { cls: 'cat-outros' };
+      return `
+        <div class="cat-section ${meta.cls}">
+          <div class="cat-header">
+            <div class="cat-dot"></div>
+            <span class="cat-name">${cat}</span>
+            <span class="cat-count">${byCat[cat].length}</span>
+            <div class="cat-line"></div>
+          </div>
+          <div class="cards-grid">
+            ${byCat[cat].map(s => renderCard(s, cat, meta)).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderCard(s, cat, meta) {
+    const esc = v => (v||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    return `
+      <div class="card ${meta.cls}" id="card-${s.id}">
+        <div>
+          <span class="card-badge">${cat}</span>
+        </div>
+        <input class="card-name-field"
+          value="${esc(s.nome)}"
+          placeholder="Nome do serviço"
+          onchange="updateField(${s.id},'nome',this.value)">
+        <div class="fields-list">
+          <div class="field-item">
+            <span class="field-label">Duração</span>
+            <input class="field-input" value="${esc(s.duracao)}" placeholder="ex: 45 min"
+              onchange="updateField(${s.id},'duracao',this.value)">
+          </div>
+          <div class="field-item">
+            <span class="field-label">Valor</span>
+            <input class="field-input" value="${esc(s.valor)}" placeholder="ex: R$ 80,00"
+              onchange="updateField(${s.id},'valor',this.value)">
+          </div>
+          <div class="field-item">
+            <span class="field-label">Profissional</span>
+            <input class="field-input" value="${esc(s.profissional)}" placeholder="—"
+              onchange="updateField(${s.id},'profissional',this.value)">
+          </div>
+          <div class="field-item">
+            <span class="field-label">Categoria</span>
+            <select class="field-input" onchange="updateCat(${s.id},this.value)" style="cursor:pointer;background:transparent;color:var(--text2);">
+              ${Object.keys(CAT_META).map(c => `<option value="${c}" ${c===cat?'selected':''} style="background:#221d1f;color:#f0ebe8">${c}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-card-del" onclick="removeService(${s.id})">remover</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateField(id, field, value) {
+    const s = services.find(x => x.id === id);
+    if (s) s[field] = value;
+  }
+
+  function updateCat(id, value) {
+    const s = services.find(x => x.id === id);
+    if (s) { s.categoria = value; renderAll(); }
+  }
+
+  function removeService(id) {
+    services = services.filter(s => s.id !== id);
+    renderAll();
+    showToast('Serviço removido');
+  }
+
+  /* ── EXPORT ── */
+  function exportJSON() {
+    if (!services.length) { showError('Nenhum serviço para exportar.'); return; }
+    const data = services.map(({id, ...s}) => s);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'servicos-salao.json'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('JSON exportado com sucesso');
+  }
+
+  function clearAll() {
+    if (!confirm('Remover todos os serviços cadastrados?')) return;
+    services = [];
+    renderAll();
+  }
+
+  /* ── UI HELPERS ── */
+  function setLoading(show, msg) {
+    const el = document.getElementById('loadingBar');
+    el.classList.toggle('show', show);
+    if (msg) document.getElementById('loadingMsg').textContent = msg;
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorBox');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideError() {
+    document.getElementById('errorBox').classList.remove('show');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
